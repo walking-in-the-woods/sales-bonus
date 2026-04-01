@@ -26,6 +26,25 @@ function calculateBonusByProfit(index, total, seller) {
     return seller.profit * percent / 100;
 }
 
+// Вспомогательная функция для формирования статистики
+function createSellerStats(sellers) {
+    return sellers.map(seller => ({
+        id: seller.id,
+        name: `${seller.first_name} ${seller.last_name}`,
+        revenue: 0,
+        profit: 0,
+        sales_count: 0,
+        products_sold: {}
+    }));
+}
+
+// Вспомогательная функция для индексации
+function createIndexes(sellerStats, products) {
+    const sellerIndex = Object.fromEntries(sellerStats.map(stat => [stat.id, stat]));
+    const productIndex = Object.fromEntries(products.map(product => [product.sku, product]));
+    return { sellerIndex, productIndex };
+}
+
 /**
  * Функция для анализа данных продаж
  * @param data
@@ -51,20 +70,9 @@ function analyzeSalesData(data, options) {
     }
 
     // Подготовка промежуточных данных для сбора статистики
-    const sellerStats = data.sellers.map(seller => ({
-        id: seller.id,
-        name: `${seller.first_name} ${seller.last_name}`,
-        revenue: 0,
-        profit: 0,
-        sales_count: 0,
-        products_sold: {}
-    }));
-
+    const sellerStats = createSellerStats(data.sellers);
     // Индексация продавцов и товаров для быстрого доступа
-    const sellerIndex = {};
-    sellerStats.forEach(stat => { sellerIndex[stat.id] = stat; });
-    const productIndex = {};
-    data.products.forEach(product => { productIndex[product.sku] = product; });
+    const { sellerIndex, productIndex } = createIndexes(sellerStats, data.products);
 
     // Расчет выручки и прибыли для каждого продавца
     data.purchase_records.forEach(record => {
