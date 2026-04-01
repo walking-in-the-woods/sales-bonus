@@ -1,17 +1,25 @@
-// Константы
+/**
+ * Процент бонуса для различных мест в рейтинге.
+ * @constant
+ */
 const BONUS_PERCENT = {
     FIRST: 15,
     SECOND_THIRD: 10,
     OTHER: 5,
     LAST: 0
 };
+
+/**
+ * Количество товаров в топе.
+ * @constant
+ */
 const TOP_PRODUCTS_LIMIT = 10;
 
 /**
- * Функция для расчета выручки
- * @param purchase запись о покупке
- * @param _product карточка товара
- * @returns {number}
+ * Функция для расчета выручки.
+ * @param {Object} purchase - Запись о покупке (item из чека).
+ * @param {Object} _product - Карточка товара (не используется).
+ * @returns {number} Выручка в рублях.
  */
 function calculateSimpleRevenue(purchase, _product) {
    //  Расчет выручки от операции
@@ -20,11 +28,11 @@ function calculateSimpleRevenue(purchase, _product) {
 }
 
 /**
- * Функция для расчета бонусов
- * @param index порядковый номер в отсортированном массиве
- * @param total общее число продавцов
- * @param seller карточка продавца
- * @returns {number}
+ * Функция для расчета бонусов.
+ * @param {number} index - Позиция продавца в рейтинге (0-based).
+ * @param {number} total - Общее количество продавцов.
+ * @param {Object} seller - Объект статистики продавца.
+ * @returns {number} Сумма бонуса.
  */
 function calculateBonusByProfit(index, total, seller) {
     // Расчет бонуса от позиции в рейтинге
@@ -35,7 +43,11 @@ function calculateBonusByProfit(index, total, seller) {
     return seller.profit * percent / 100;
 }
 
-// Вспомогательная функция для формирования статистики
+/**
+ * Создаёт начальную статистику для каждого продавца.
+ * @param {Array} sellers - Массив продавцов.
+ * @returns {Array} Массив объектов статистики.
+ */
 function createSellerStats(sellers) {
     return sellers.map(seller => ({
         id: seller.id,
@@ -47,14 +59,25 @@ function createSellerStats(sellers) {
     }));
 }
 
-// Вспомогательная функция для индексации
+/**
+ * Создаёт индексы для быстрого доступа к продавцам и товарам.
+ * @param {Array} sellerStats - Статистика продавцов.
+ * @param {Array} products - Массив товаров.
+ * @returns {Object} Объект с индексами { sellerIndex, productIndex }.
+ */
 function createIndexes(sellerStats, products) {
     const sellerIndex = Object.fromEntries(sellerStats.map(stat => [stat.id, stat]));
     const productIndex = Object.fromEntries(products.map(product => [product.sku, product]));
     return { sellerIndex, productIndex };
 }
 
-// Функция для расчета выручки и прибыли для каждого продавца
+/**
+ * Обрабатывает записи о покупках, накапливая статистику.
+ * @param {Array} records - Массив чеков.
+ * @param {Object} sellerIndex - Индекс продавцов.
+ * @param {Object} productIndex - Индекс товаров.
+ * @param {Function} calculateRevenue - Функция расчёта выручки.
+ */
 function processPurchaseRecords(records, sellerIndex, productIndex, calculateRevenue) {
     records.forEach(record => {
         const seller = sellerIndex[record.seller_id];
@@ -81,7 +104,12 @@ function processPurchaseRecords(records, sellerIndex, productIndex, calculateRev
     });
 }
 
-// Функция для формирования топ-10 товаров
+/**
+ * Формирует топ-N товаров из объекта проданных товаров.
+ * @param {Object} productsSold - Объект { sku: quantity }.
+ * @param {number} limit - Количество элементов в топе.
+ * @returns {Array} Массив объектов { sku, quantity }.
+ */
 function buildTopProducts(productsSold, limit) {
     return Object.entries(productsSold)
         .map(([sku, quantity]) => ({ sku, quantity }))
@@ -89,7 +117,11 @@ function buildTopProducts(productsSold, limit) {
         .slice(0, limit);
 }
 
-// Функция для формирования итогового отчета
+/**
+ * Форматирует статистику продавцов в итоговый отчёт.
+ * @param {Array} sellerStats - Статистика продавцов.
+ * @returns {Array} Массив объектов отчёта.
+ */
 function formatReport(sellerStats) {
     return sellerStats.map(seller => ({
         seller_id: seller.id,
@@ -103,10 +135,10 @@ function formatReport(sellerStats) {
 }
 
 /**
- * Функция для анализа данных продаж
- * @param data
- * @param options
- * @returns {{revenue, top_products, bonus, name, sales_count, profit, seller_id}[]}
+ * Главная функция анализа данных.
+ * @param {Object} data - Исходные данные.
+ * @param {Object} options - Опции с функциями calculateRevenue и calculateBonus.
+ * @returns {Array} Отчёт по продавцам.
  */
 function analyzeSalesData(data, options) {
     // Проверка входных данных
