@@ -72,6 +72,27 @@ function processPurchaseRecords(records, sellerIndex, productIndex, calculateRev
     });
 }
 
+// Функция для формирования топ-10 товаров
+function buildTopProducts(productsSold, limit) {
+    return Object.entries(productsSold)
+        .map(([sku, quantity]) => ({ sku, quantity }))
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, limit);
+}
+
+// Функция для формирования итогового отчета
+function formatReport(sellerStats) {
+    return sellerStats.map(seller => ({
+        seller_id: seller.id,
+        name: seller.name,
+        revenue: +seller.revenue.toFixed(2),
+        profit: +seller.profit.toFixed(2),
+        sales_count: seller.sales_count,
+        top_products: seller.top_products,
+        bonus: +seller.bonus.toFixed(2)
+    }));
+}
+
 /**
  * Функция для анализа данных продаж
  * @param data
@@ -111,24 +132,9 @@ function analyzeSalesData(data, options) {
     const total = sellerStats.length;
     sellerStats.forEach((seller, index) => {
         seller.bonus = calculateBonus(index, total, seller);
-    });
-
-    // Формирование топ-10 товаров
-    sellerStats.forEach(seller => {
-        seller.top_products = Object.entries(seller.products_sold)
-            .map(([sku, quantity]) => ({ sku, quantity }))
-            .sort((a, b) => b.quantity - a.quantity)
-            .slice(0, 10);
+        seller.top_products = buildTopProducts(seller.products_sold, 10);
     });
 
     // Итоговый отчёт
-    return sellerStats.map(seller => ({
-        seller_id: seller.id,
-        name: seller.name,
-        revenue: +seller.revenue.toFixed(2),
-        profit: +seller.profit.toFixed(2),
-        sales_count: seller.sales_count,
-        top_products: seller.top_products,
-        bonus: +seller.bonus.toFixed(2)
-    }));
+    return formatReport(sellerStats);
 }
