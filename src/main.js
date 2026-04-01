@@ -26,23 +26,24 @@ function calculateBonusByProfit(index, total, seller) {
  * @returns {{revenue, top_products, bonus, name, sales_count, profit, seller_id}[]}
  */
 function analyzeSalesData(data, options) {
-    // @TODO: Проверка входных данных
+    // Проверка входных данных
+    if (!data ||
+        !Array.isArray(data.sellers) || data.sellers.length === 0 ||
+        !Array.isArray(data.products) || data.products.length === 0 ||
+        !Array.isArray(data.purchase_records) || data.purchase_records.length === 0) {
+        throw new Error('Некорректные входные данные');
+    }
 
-    // @TODO: Проверка наличия опций
+    // Проверка наличия опций
+    if (!options || typeof options !== 'object') {
+        throw new Error('Отсутствуют опции');
+    }
+    const { calculateRevenue, calculateBonus } = options;
+    if (typeof calculateRevenue !== 'function' || typeof calculateBonus !== 'function') {
+        throw new Error('Не переданы функции для расчётов');
+    }
 
-    // @TODO: Подготовка промежуточных данных для сбора статистики
-
-    // @TODO: Индексация продавцов и товаров для быстрого доступа
-
-    // @TODO: Расчет выручки и прибыли для каждого продавца
-
-    // @TODO: Сортировка продавцов по прибыли
-
-    // @TODO: Назначение премий на основе ранжирования
-
-    // @TODO: Подготовка итоговой коллекции с нужными полями
-
-    // Создаём начальную статистику по продавцам
+    // Подготовка промежуточных данных для сбора статистики
     const sellerStats = data.sellers.map(seller => ({
         id: seller.id,
         name: `${seller.first_name} ${seller.last_name}`,
@@ -52,13 +53,13 @@ function analyzeSalesData(data, options) {
         products_sold: {}
     }));
 
-    // Индексы для быстрого доступа
+    // Индексация продавцов и товаров для быстрого доступа
     const sellerIndex = {};
     sellerStats.forEach(stat => { sellerIndex[stat.id] = stat; });
     const productIndex = {};
     data.products.forEach(product => { productIndex[product.sku] = product; });
 
-    // Обработка чеков
+    // Расчет выручки и прибыли для каждого продавца
     data.purchase_records.forEach(record => {
         const seller = sellerIndex[record.seller_id];
         if (!seller) return;
@@ -84,10 +85,10 @@ function analyzeSalesData(data, options) {
         });
     });
 
-    // Сортировка по прибыли
+    // Сортировка продавцов по прибыли
     sellerStats.sort((a, b) => b.profit - a.profit);
 
-    // Назначение бонусов
+    // Назначение премий на основе ранжирования
     const total = sellerStats.length;
     sellerStats.forEach((seller, index) => {
         let percent = 5; // по умолчанию
