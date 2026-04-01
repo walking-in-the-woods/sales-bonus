@@ -45,6 +45,33 @@ function createIndexes(sellerStats, products) {
     return { sellerIndex, productIndex };
 }
 
+// Функция для расчета выручки и прибыли для каждого продавца
+function processPurchaseRecords(records, sellerIndex, productIndex, calculateRevenue) {
+    records.forEach(record => {
+        const seller = sellerIndex[record.seller_id];
+        if (!seller) return;
+
+        seller.sales_count += 1;
+        seller.revenue += record.total_amount;
+
+        record.items.forEach(item => {
+            const product = productIndex[item.sku];
+            if (!product) return;
+
+            const cost = product.purchase_price * item.quantity;
+            const revenue = calculateRevenue(item, product);
+            const profit = revenue - cost;
+
+            seller.profit += profit;
+
+            if (!seller.products_sold[item.sku]) {
+                seller.products_sold[item.sku] = 0;
+            }
+            seller.products_sold[item.sku] += item.quantity;
+        });
+    });
+}
+
 /**
  * Функция для анализа данных продаж
  * @param data
@@ -75,29 +102,7 @@ function analyzeSalesData(data, options) {
     const { sellerIndex, productIndex } = createIndexes(sellerStats, data.products);
 
     // Расчет выручки и прибыли для каждого продавца
-    data.purchase_records.forEach(record => {
-        const seller = sellerIndex[record.seller_id];
-        if (!seller) return;
-
-        seller.sales_count += 1;
-        seller.revenue += record.total_amount;
-
-        record.items.forEach(item => {
-            const product = productIndex[item.sku];
-            if (!product) return;
-
-            const cost = product.purchase_price * item.quantity;
-            const revenue = calculateRevenue(item, product);
-            const profit = revenue - cost;
-
-            seller.profit += profit;
-
-            if (!seller.products_sold[item.sku]) {
-                seller.products_sold[item.sku] = 0;
-            }
-            seller.products_sold[item.sku] += item.quantity;
-        });
-    });
+    processPurchaseRecords(data.purchase_records, sellerIndex, productIndex, calculateRevenue);
 
     // Сортировка продавцов по прибыли
     sellerStats.sort((a, b) => b.profit - a.profit);
