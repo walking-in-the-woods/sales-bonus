@@ -1,3 +1,12 @@
+// Константы
+const BONUS_PERCENT = {
+    FIRST: 15,
+    SECOND_THIRD: 10,
+    OTHER: 5,
+    LAST: 0
+};
+const TOP_PRODUCTS_LIMIT = 10;
+
 /**
  * Функция для расчета выручки
  * @param purchase запись о покупке
@@ -19,10 +28,10 @@ function calculateSimpleRevenue(purchase, _product) {
  */
 function calculateBonusByProfit(index, total, seller) {
     // Расчет бонуса от позиции в рейтинге
-    let percent = 5; // по умолчанию
-    if (index === 0) percent = 15;
-    else if (index === 1 || index === 2) percent = 10;
-    else if (index === total - 1) percent = 0;
+    let percent = BONUS_PERCENT.OTHER;
+    if (index === 0) percent = BONUS_PERCENT.FIRST;
+    else if (index === 1 || index === 2) percent = BONUS_PERCENT.SECOND_THIRD;
+    else if (index === total - 1) percent = BONUS_PERCENT.LAST;
     return seller.profit * percent / 100;
 }
 
@@ -132,7 +141,7 @@ function analyzeSalesData(data, options) {
     const total = sellerStats.length;
     sellerStats.forEach((seller, index) => {
         seller.bonus = calculateBonus(index, total, seller);
-        seller.top_products = buildTopProducts(seller.products_sold, 10);
+        seller.top_products = buildTopProducts(seller.products_sold, TOP_PRODUCTS_LIMIT);
     });
 
     // Итоговый отчёт
