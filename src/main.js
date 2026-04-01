@@ -18,7 +18,12 @@ function calculateSimpleRevenue(purchase, _product) {
  * @returns {number}
  */
 function calculateBonusByProfit(index, total, seller) {
-    // @TODO: Расчет бонуса от позиции в рейтинге
+    // Расчет бонуса от позиции в рейтинге
+    let percent = 5; // по умолчанию
+    if (index === 0) percent = 15;
+    else if (index === 1 || index === 2) percent = 10;
+    else if (index === total - 1) percent = 0;
+    return seller.profit * percent / 100;
 }
 
 /**
@@ -92,11 +97,7 @@ function analyzeSalesData(data, options) {
     // Назначение премий на основе ранжирования
     const total = sellerStats.length;
     sellerStats.forEach((seller, index) => {
-        let percent = 5; // по умолчанию
-        if (index === 0) percent = 15;
-        else if (index === 1 || index === 2) percent = 10;
-        else if (index === total - 1) percent = 0;
-        seller.bonus = seller.profit * percent / 100;
+        seller.bonus = calculateBonus(index, total, seller);
     });
 
     // Формирование топ-10 товаров
